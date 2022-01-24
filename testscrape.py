@@ -1,25 +1,32 @@
 import json
 import requests
 from tabulate import tabulate
+import numpy as np
 
 url = "https://communities.win/api/v2/post/newv2.json?community=technology"
-global sheet
+global file
+file = "D:\stuff.txt"
 sheet = [["uuid", "title", "author", "comments", "lastcomment", "lca"]]
 
-def appendsheet(items,status):
-    if status != "first":
-        itemlist = items
-    else:
-        itemlist = items[1:]
+def appenddict(aposts,items):
+    itemlist = items[1:]
     for x in itemlist:
-        #print(x['title'])
+        posts.append(x)
+
+def formsheet(postlist):
+    a_file = open(file, "w")
+    json.dump(postlist,a_file)
+    a_file.close()
+    for x in postlist:
+        print(x['title'])
         uuid = x['uuid']
         title = x['title']
         author = x['author']
         comments = x['comments']
         lastcomment = x['last_comment_created']
         lca = x['last_comment_author']
-        sheet.append([uuid, title, author, comments, lastcomment, lca])
+        sheet.append([uuid, title, author, comments, lastcomment, lca])  
+    return sheet        
 
 def uuid_iteration(uposts):
     fpost = uposts[0]['uuid']
@@ -36,15 +43,15 @@ def uuid_iteration(uposts):
         lpost = iposts[-1]['uuid']
         if fpost == lpost:
             break
-        appendsheet(iposts,"i")
-    return posts
+        appenddict(posts,iposts)
 
 request = requests.get(url)
 data = request.json()
+global posts
 posts = data["posts"]
-appendsheet(posts,"f")
  
 uuid_iteration(posts)
 
+formsheet(posts)
 print(tabulate(sheet))
 print(len(sheet))
