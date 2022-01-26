@@ -5,8 +5,8 @@ import numpy as np
 
 url = "https://communities.win/api/v2/post/newv2.json?community=technology"
 global file
-file = "D:\stuff.txt"
-sheet = [["uuid", "title", "author", "comments", "lastcomment", "lca"]]
+file = "D:\stuff2.txt"
+sheet = [["id", "title", "author", "comments", "lastcomment", "lca"]]
 
 def appenddict(aposts,items):
     itemlist = items[1:]
@@ -19,13 +19,13 @@ def formsheet(postlist):
     a_file.close()
     for x in postlist:
         print(x['title'])
-        uuid = x['uuid']
+        id = x['id']
         title = x['title']
         author = x['author']
         comments = x['comments']
         lastcomment = x['last_comment_created']
         lca = x['last_comment_author']
-        sheet.append([uuid, title, author, comments, lastcomment, lca])  
+        sheet.append([id, title, author, comments, lastcomment, lca])
     return sheet        
 
 def uuid_iteration(uposts):
