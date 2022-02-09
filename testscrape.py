@@ -35,10 +35,7 @@ if cids==None:
 cid = (cids[0])
 print(cid)
 
-
-
 class posts:
-
     def __init__(self):
         request = requests.get(phase1)
         data = request.json()
@@ -72,11 +69,6 @@ class posts:
             pid = cursor.fetchone()
             if pid==None:
                 x['author'] = useridlookup(x['author'])
-                if x['last_comment_author']:
-                    x['last_comment_author'] = useridlookup(x['last_comment_author'])
-                else:
-                    #TO DO seed null user on table creation
-                    x['last_comment_author'] = "26"
                 try:
                     #length changes if crosspost
                     #c = len(x)
@@ -94,9 +86,9 @@ class posts:
                 except mysql.connector.Error as error:
                     print(x)
                     print("Failed to insert into MySQL table {}".format(error))
+                    break
 
 class comments:
-
     def __init__ (self):
         if config['Flags']['comments']=="false":
                 cursor.execute("SELECT id,comments FROM posts")
@@ -134,9 +126,6 @@ class comments:
                 else:
                     break
             self.clist = comms
-
-    
-
     def insertcomms(self):        
         def commsearch(var):
             cursor.execute("SELECT id FROM comments WHERE id = %s", (var['id'],))
@@ -161,7 +150,6 @@ class comments:
                 print("Failed to insert into MySQL table {}".format(error))
                 break
                 
-
 #populate user / search lookup ID
 def useridlookup(user):
     cursor.execute("SELECT id FROM users WHERE user = %s", (user,))
@@ -177,8 +165,6 @@ def useridlookup(user):
         cursor.execute("SELECT id FROM users WHERE user = %s", (user,))
         r = cursor.fetchone()
     return r[0]
-
-
 
 plist = posts()
 plist.insertposts()
