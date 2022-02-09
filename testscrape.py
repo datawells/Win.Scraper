@@ -54,15 +54,15 @@ def insertposts(postlist):
             try:
                 #length changes if crosspost
                 #c = len(x)
-                c = int('41')
+                c = int('39')
                 s = "%s, " * c
                 s = s.rstrip(', ')
                 if "crosspost_uuid" in x.keys():
                     xpid = x['crosspost_uuid']
                 else:
                     xpid = ""
-                insert = f"INSERT INTO posts (id, uuid, preview, is_locked, is_twitter, tweet_id, sticky_comment, link, domain, author_flair_class, is_video_mp4, is_removed, title, type, content, score_up, score_down, score, author_flair_text, is_admin, suggested_sort, is_stickied, is_nsfw, post_flair_class, is_deleted, is_image, comments, author, created, is_edited, community, is_moderator, last_comment_author, last_comment_created, is_video, video_link, is_new_user, vote_state, post_flair_text, crosspost_uuid, is_crosspost) VALUES ({s})"
-                ival = (x['id'], x['uuid'], x['preview'], int(x['is_locked']), int(x['is_twitter']), x['tweet_id'], x['sticky_comment'], x['link'], x['domain'], x['author_flair_class'], int(x['is_video_mp4']), int(x['is_removed']), x['title'], x['type'], x['content'], x['score_up'], x['score_down'], x['score'], x['author_flair_text'], int(x['is_admin']), x['suggested_sort'], int(x['is_stickied']), int(x['is_nsfw']), x['post_flair_class'], int(x['is_deleted']), int(x['is_image']), x['comments'], x['author'], x['created'], int(x['is_edited']), cid, int(x['is_moderator']), x['last_comment_author'], x['last_comment_created'], int(x['is_video']), x['video_link'], int(x['is_new_user']), x['vote_state'], x['post_flair_text'], xpid, int(x['is_crosspost']))
+                insert = f"INSERT INTO posts (id, uuid, preview, is_locked, is_twitter, tweet_id, sticky_comment, link, domain, author_flair_class, is_video_mp4, is_removed, title, type, content, score_up, score_down, score, author_flair_text, is_admin, suggested_sort, is_stickied, is_nsfw, post_flair_class, is_deleted, is_image, comments, author, created, is_edited, community, is_moderator, , is_video, video_link, is_new_user, vote_state, post_flair_text, crosspost_uuid, is_crosspost) VALUES ({s})"
+                ival = (x['id'], x['uuid'], x['preview'], int(x['is_locked']), int(x['is_twitter']), x['tweet_id'], x['sticky_comment'], x['link'], x['domain'], x['author_flair_class'], int(x['is_video_mp4']), int(x['is_removed']), x['title'], x['type'], x['content'], x['score_up'], x['score_down'], x['score'], x['author_flair_text'], int(x['is_admin']), x['suggested_sort'], int(x['is_stickied']), int(x['is_nsfw']), x['post_flair_class'], int(x['is_deleted']), int(x['is_image']), x['comments'], x['author'], x['created'], int(x['is_edited']), cid, int(x['is_moderator']), int(x['is_video']), x['video_link'], int(x['is_new_user']), x['vote_state'], x['post_flair_text'], xpid, int(x['is_crosspost']))
                 cursor.execute(insert, ival)
                 mydb.commit()
             except mysql.connector.Error as error:
@@ -160,18 +160,14 @@ while lpost != fpost:
 insertposts(posts)
 
 if config['Flags']['comments']=="false":
-        cursor.execute("SELECT * FROM comments")
-        cuuid = cursor.fetchone()
-        if cuuid==None:
-            print('comments2')
-            cursor.execute("SELECT id,comments FROM posts")
-            pid = cursor.fetchall()
-            for p in (y for y in pid if y[1] > 0):
-                phase2 = f"https://communities.win/api/v2/post/post.json?id={p[0]}&commentSort=top&comments=true"
-                print(phase2)
-                crequest = requests.get(phase2)
-                cdata = crequest.json()
-                insertcomm(cdata["comments"])
+        cursor.execute("SELECT id,comments FROM posts")
+        pid = cursor.fetchall()
+        for p in (y for y in pid if y[1] > 0):
+            phase2 = f"https://communities.win/api/v2/post/post.json?id={p[0]}&commentSort=top&comments=true"
+            print(phase2)
+            crequest = requests.get(phase2)
+            cdata = crequest.json()
+            insertcomm(cdata["comments"])
         config.set('Flags','comments','true')
         config.write(open("config.ini", "w"))    
 else:    
@@ -183,7 +179,7 @@ else:
     
     comms = cdata["comments"]
     lcom = comms[-1]['id']
-    while True:
+    while p < 100:
         print(lcom)
         cursor.execute("SELECT id FROM comments WHERE id = %s", (lcom,))
         comid = cursor.fetchone()
@@ -198,5 +194,5 @@ else:
             lcom = icomms[-1]['id']
         else:
             break
-    insertcomm(comms)
 
+    insertcomm(comms)

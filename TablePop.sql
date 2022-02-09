@@ -46,8 +46,6 @@ CREATE TABLE posts (
     `is_edited` BOOLEAN NOT NULL,
     `community` INT NOT NULL,
     `is_moderator` BOOLEAN NOT NULL,
-    `last_comment_author` INT,
-    `last_comment_created` BIGINT,
     `is_video` BOOLEAN NOT NULL,
     `video_link` VARCHAR(255),
     `is_new_user` BOOLEAN NOT NULL,
