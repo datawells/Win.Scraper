@@ -1,16 +1,16 @@
 import json
+from types import ClassMethodDescriptorType
 import requests
 import configparser
 import mysql.connector
 config = configparser.ConfigParser()
 config.read('config.ini')
-
 mydb = mysql.connector.connect(
 host=config['Database']['host'],
 port=config['Database']['port'],
 user=config['Database']['user'],
 password=config['Database']['password'],
-database=config['Database']['database'],
+database=config['Database']['db'],
 auth_plugin=config['Database']['auth_plugin'])
 cursor = mydb.cursor(buffered=True)
 
@@ -36,8 +36,8 @@ cid = (cids[0])
 print(cid)
 
 class posts:
-    def __init__(self):
-        request = requests.get(phase1)
+    def __init__(self, plist, title):
+        request = requests.get(plist)
         data = request.json()
         self.posts = data["posts"]
         fpost = self.posts[0]['uuid']
@@ -61,32 +61,46 @@ class posts:
                 self.posts.extend(iposts[1:])
             else:
                 break
+        if title != False:
+            self.posts[0]['title'] = title
+
+    
+    @classmethod
+    def pull_list(cls, plist, title):
+        return cls(plist, False)
+
+    @classmethod
+    def pull_missing(cls, plist, title):
+        return cls(plist, title)    
+
     #inserts posts into DB
     def insertposts(self):
-        for x in self.posts:
-            #print(x['title'])
-            cursor.execute("SELECT id FROM posts WHERE id = %s", (x['id'],))
-            pid = cursor.fetchone()
-            if pid==None:
-                x['author'] = useridlookup(x['author'])
-                try:
-                    #length changes if crosspost
-                    #c = len(x)
-                    c = int('39')
-                    s = "%s, " * c
-                    s = s.rstrip(', ')
-                    if "crosspost_uuid" in x.keys():
-                        xpid = x['crosspost_uuid']
-                    else:
-                        xpid = ""
-                    insert = f"INSERT INTO posts (id, uuid, preview, is_locked, is_twitter, tweet_id, sticky_comment, link, domain, author_flair_class, is_video_mp4, is_removed, title, type, content, score_up, score_down, score, author_flair_text, is_admin, suggested_sort, is_stickied, is_nsfw, post_flair_class, is_deleted, is_image, comments, author, created, is_edited, community, is_moderator, is_video, video_link, is_new_user, vote_state, post_flair_text, crosspost_uuid, is_crosspost) VALUES ({s})"
-                    ival = (x['id'], x['uuid'], x['preview'], int(x['is_locked']), int(x['is_twitter']), x['tweet_id'], x['sticky_comment'], x['link'], x['domain'], x['author_flair_class'], int(x['is_video_mp4']), int(x['is_removed']), x['title'], x['type'], x['content'], x['score_up'], x['score_down'], x['score'], x['author_flair_text'], int(x['is_admin']), x['suggested_sort'], int(x['is_stickied']), int(x['is_nsfw']), x['post_flair_class'], int(x['is_deleted']), int(x['is_image']), x['comments'], x['author'], x['created'], int(x['is_edited']), cid, int(x['is_moderator']), int(x['is_video']), x['video_link'], int(x['is_new_user']), x['vote_state'], x['post_flair_text'], xpid, int(x['is_crosspost']))
-                    cursor.execute(insert, ival)
-                    mydb.commit()
-                except mysql.connector.Error as error:
-                    print(x)
-                    print("Failed to insert into MySQL table {}".format(error))
-                    break
+        if self.posts!=None:
+            for x in self.posts:
+                #print(x['title'])
+                cursor.execute("SELECT id FROM posts WHERE id = %s", (x['id'],))
+                pid = cursor.fetchone()
+                if pid==None:
+                    x['author'] = useridlookup(x['author'])
+                    try:
+                        #length changes if crosspost
+                        #c = len(x)
+                        c = int('39')
+                        s = "%s, " * c
+                        s = s.rstrip(', ')
+                        if "crosspost_uuid" in x.keys():
+                            xpid = x['crosspost_uuid']
+                        else:
+                            xpid = ""
+                        insert = f"INSERT INTO posts (id, uuid, preview, is_locked, is_twitter, tweet_id, sticky_comment, link, domain, author_flair_class, is_video_mp4, is_removed, title, type, content, score_up, score_down, score, author_flair_text, is_admin, suggested_sort, is_stickied, is_nsfw, post_flair_class, is_deleted, is_image, comments, author, created, is_edited, community, is_moderator, is_video, video_link, is_new_user, vote_state, post_flair_text, crosspost_uuid, is_crosspost) VALUES ({s})"
+                        ival = (x['id'], x['uuid'], x['preview'], int(x['is_locked']), int(x['is_twitter']), x['tweet_id'], x['sticky_comment'], x['link'], x['domain'], x['author_flair_class'], int(x['is_video_mp4']), int(x['is_removed']), x['title'], x['type'], x['content'], x['score_up'], x['score_down'], x['score'], x['author_flair_text'], int(x['is_admin']), x['suggested_sort'], int(x['is_stickied']), int(x['is_nsfw']), x['post_flair_class'], int(x['is_deleted']), int(x['is_image']), x['comments'], x['author'], x['created'], int(x['is_edited']), cid, int(x['is_moderator']), int(x['is_video']), x['video_link'], int(x['is_new_user']), x['vote_state'], x['post_flair_text'], xpid, int(x['is_crosspost']))
+                        cursor.execute(insert, ival)
+                        mydb.commit()
+                    except mysql.connector.Error as error:
+                        print(x)
+                        print("Failed to insert into MySQL table {}".format(error))
+                        break
+   
 
 class comments:
     def __init__ (self):
@@ -135,21 +149,29 @@ class comments:
         cproclist = [c for c in self.clist if commsearch(c) == None]
         for x in reversed(cproclist):
             x['author'] = useridlookup(x['author'])
-            try:
-                #length changes if crosspost
-                #c = len(x)
-                clen = int('19')
-                s = "%s, " * clen
-                s = s.rstrip(', ')
-                insert = f"INSERT INTO comments (id, uuid, parent_id, is_removed, content, score_up, score_down, score, is_admin, is_stickied, is_deleted, author, created, comment_parent_id, is_edited, community, is_moderator, is_new_user, vote_state) VALUES ({s})"
-                ival = (x['id'], x['uuid'], x['parent_id'], int(x['is_removed']), x['content'], x['score_up'], x['score_down'], x['score'], int(x['is_admin']), int(x['is_stickied']), int(x['is_deleted']), x['author'], x['created'], x['comment_parent_id'], int(x['is_edited']), cid, int(x['is_moderator']), int(x['is_new_user']), x['vote_state'])
-                cursor.execute(insert, ival)
-                mydb.commit()
-            except mysql.connector.Error as error:
-                print(x)
-                print("Failed to insert into MySQL table {}".format(error))
+            for i in range(0,2):
+                try:
+                    #length changes if crosspost
+                    #c = len(x)
+                    clen = int('19')
+                    s = "%s, " * clen
+                    s = s.rstrip(', ')
+                    insert = f"INSERT INTO comments (id, uuid, parent_id, is_removed, content, score_up, score_down, score, is_admin, is_stickied, is_deleted, author, created, comment_parent_id, is_edited, community, is_moderator, is_new_user, vote_state) VALUES ({s})"
+                    ival = (x['id'], x['uuid'], x['parent_id'], int(x['is_removed']), x['content'], x['score_up'], x['score_down'], x['score'], int(x['is_admin']), int(x['is_stickied']), int(x['is_deleted']), x['author'], x['created'], x['comment_parent_id'], int(x['is_edited']), cid, int(x['is_moderator']), int(x['is_new_user']), x['vote_state'])
+                    cursor.execute(insert, ival)
+                    mydb.commit()
+                except mysql.connector.Error as error:
+                    print(x)
+                    print("Failed to insert into MySQL table {}".format(error))
+                    if error.errno == 1452 and i < 1:
+                        mp = f"https://communities.win/api/v2/post/post.json?id={x['parent_id']}"
+                        print(mp)
+                        missingp = posts.pull_missing(mp, x['post_title'])
+                        missingp.insertposts()
+                        continue
+                    else:
+                        break
                 break
-                
 #populate user / search lookup ID
 def useridlookup(user):
     cursor.execute("SELECT id FROM users WHERE user = %s", (user,))
@@ -166,7 +188,7 @@ def useridlookup(user):
         r = cursor.fetchone()
     return r[0]
 
-plist = posts()
+plist = posts.pull_list(phase1, False)
 plist.insertposts()
 
 clist = comments()
