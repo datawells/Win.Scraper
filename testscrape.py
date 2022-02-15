@@ -3,37 +3,47 @@ from types import ClassMethodDescriptorType
 import requests
 import configparser
 import mysql.connector
-config = configparser.ConfigParser()
-config.read('config.ini')
-mydb = mysql.connector.connect(
-host=config['Database']['host'],
-port=config['Database']['port'],
-user=config['Database']['user'],
-password=config['Database']['password'],
-database=config['Database']['db'],
-auth_plugin=config['Database']['auth_plugin'])
-cursor = mydb.cursor(buffered=True)
-
-#values for community lookup
-community = config['Community']['community1']
-phase1 = f"https://communities.win/api/v2/post/newv2.json?community={community}"
-
-#populate community / retrieve community ID
-cursor.execute("SELECT id FROM communities WHERE community = %s", (community,))
-cids = cursor.fetchone()
-
-if cids==None:
+def main():
+    global config
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    global mydb
     try:
-        insert = "INSERT INTO communities (id, community) VALUES (%s, %s)"
-        ival = ("0", community)
-        cursor.execute(insert, ival)
-        mydb.commit()
+        mydb = mysql.connector.connect(
+        host=config['Database']['host'],
+        port=config['Database']['port'],
+        user=config['Database']['user'],
+        password=config['Database']['password'],
+        database=config['Database']['db'],
+        auth_plugin=config['Database']['auth_plugin'])
     except mysql.connector.Error as error:
         print("Failed to insert into MySQL table {}".format(error))
+        quit()
+    global cursor
+    cursor = mydb.cursor(buffered=True)
+
+    #values for community lookup
+    global community
+    community = config['Community']['community1']
+    global phase1
+    phase1 = f"https://communities.win/api/v2/post/newv2.json?community={community}"
+
+    #populate community / retrieve community ID
     cursor.execute("SELECT id FROM communities WHERE community = %s", (community,))
     cids = cursor.fetchone()
-cid = (cids[0])
-print(cid)
+    if cids==None:
+        try:
+            insert = "INSERT INTO communities (id, community) VALUES (%s, %s)"
+            ival = ("0", community)
+            cursor.execute(insert, ival)
+            mydb.commit()
+        except mysql.connector.Error as error:
+            print("Failed to insert into MySQL table {}".format(error))
+        cursor.execute("SELECT id FROM communities WHERE community = %s", (community,))
+        cids = cursor.fetchone()
+    global cid
+    cid = (cids[0])
+    print(cid)
 
 class posts:
     def __init__(self, plist, title):
@@ -188,8 +198,11 @@ def useridlookup(user):
         r = cursor.fetchone()
     return r[0]
 
-plist = posts.pull_list(phase1, False)
-plist.insertposts()
+if __name__ == '__main__':
+    main()
 
-clist = comments()
-clist.insertcomms()
+    plist = posts.pull_list(phase1, False)
+    plist.insertposts()
+
+    clist = comments()
+    clist.insertcomms()
