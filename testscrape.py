@@ -159,7 +159,7 @@ class comments:
         cproclist = [c for c in self.clist if commsearch(c) == None]
         for x in reversed(cproclist):
             x['author'] = useridlookup(x['author'])
-            for i in range(0,2):
+            for _ in range(2):
                 try:
                     #length changes if crosspost
                     #c = len(x)
@@ -173,7 +173,7 @@ class comments:
                 except mysql.connector.Error as error:
                     print(x)
                     print("Failed to insert into MySQL table {}".format(error))
-                    if error.errno == 1452 and i < 1:
+                    if error.errno == 1452:
                         mp = f"https://communities.win/api/v2/post/post.json?id={x['parent_id']}"
                         print(mp)
                         missingp = posts.pull_missing(mp, x['post_title'])
