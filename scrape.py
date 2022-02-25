@@ -31,7 +31,7 @@ def main():
     #populate community / retrieve community ID
     cursor.execute("SELECT id FROM communities WHERE community = %s", (community,))
     cids = cursor.fetchone()
-    if cids==None:
+    if cids is None:
         try:
             insert = "INSERT INTO communities (id, community) VALUES (%s, %s)"
             ival = ("0", community)
@@ -90,7 +90,7 @@ class posts:
                 #print(x['title'])
                 cursor.execute("SELECT id FROM posts WHERE id = %s", (x['id'],))
                 pid = cursor.fetchone()
-                if pid==None:
+                if pid is None:
                     x['author'] = useridlookup(x['author'])
                     try:
                         #length changes if crosspost
@@ -138,7 +138,7 @@ class comments:
                 print(lcom)
                 cursor.execute("SELECT id FROM comments WHERE id = %s", (lcom,))
                 comid = cursor.fetchone()
-                if comid==None:
+                if comid is None:
                     p += 1
                     phase2 = f"https://communities.win/api/v2/comment/community.json?community={community}&page={p}"
                     print(phase2)
@@ -186,7 +186,7 @@ class comments:
 def useridlookup(user):
     cursor.execute("SELECT id FROM users WHERE user = %s", (user,))
     r = cursor.fetchone()
-    if r==None:
+    if r is None:
         try:
             insert = "INSERT INTO users (id, user, community) VALUES (%s, %s, %s)"
             ival = ("0", user, cid)

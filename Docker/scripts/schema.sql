@@ -57,9 +57,6 @@ CREATE TABLE posts (
     FOREIGN KEY (`author`)
         REFERENCES users(`id`)
         ON DELETE CASCADE,
-    FOREIGN KEY (`last_comment_author`)
-        REFERENCES users(`id`)
-        ON DELETE CASCADE,
     FOREIGN KEY (`community`)
         REFERENCES communities(`id`)
         ON DELETE CASCADE
