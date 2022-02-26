@@ -3,10 +3,14 @@ from types import ClassMethodDescriptorType
 import requests
 import configparser
 import mysql.connector
+import os
+dir = os.path.dirname(os.path.realpath(__file__))
+configfile = f"{dir}\config.ini"
+
 def main():
     global config
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read(configfile)
     global mydb
     try:
         mydb = mysql.connector.connect(
