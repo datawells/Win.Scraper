@@ -4,12 +4,12 @@ import requests
 import configparser
 import mysql.connector
 import os
-dir = os.path.dirname(os.path.realpath(__file__))
-configfile = os.path.join(dir, 'config.ini')
 
 def main():
     global config
     config = configparser.ConfigParser()
+    dir = os.path.dirname(os.path.realpath(__file__))
+    configfile = os.path.join(dir, 'config.ini')
     config.read(configfile)
     global mydb
     try:
