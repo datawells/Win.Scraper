@@ -9,6 +9,7 @@ def main():
     global config
     config = configparser.ConfigParser()
     dir = os.path.dirname(os.path.realpath(__file__))
+    global configfile
     configfile = os.path.join(dir, 'config.ini')
     config.read(configfile)
     global mydb
@@ -121,14 +122,20 @@ class comments:
         if config['Flags']['comments']=="false":
                 cursor.execute("SELECT id,comments FROM posts")
                 pid = cursor.fetchall()
+                i = True
                 for p in (y for y in pid if y[1] > 0):
+                    
                     phase2 = f"https://communities.win/api/v2/post/post.json?id={p[0]}&commentSort=top&comments=true"
                     print(phase2)
                     crequest = requests.get(phase2)
                     cdata = crequest.json()
-                    self.clist = cdata["comments"]
+                    if i == True:
+                        self.clist = cdata["comments"]
+                    else: 
+                        self.clist.extend(cdata["comments"])
+                    i = False
                 config.set('Flags','comments','true')
-                config.write(open("config.ini", "w"))    
+                config.write(open(configfile, "w"))    
         else:    
             p = 1
             phase2 = f"https://communities.win/api/v2/comment/community.json?community={community}&page={p}"
@@ -161,6 +168,7 @@ class comments:
             return pid
         #list comprehension to recreate list without duplicate entries
         cproclist = [c for c in self.clist if commsearch(c) == None]
+        print('writing comments to db')
         for x in reversed(cproclist):
             x['author'] = useridlookup(x['author'])
             for _ in range(2):
