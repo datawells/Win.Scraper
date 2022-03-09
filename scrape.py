@@ -6,6 +6,7 @@ import mysql.connector
 import os
 
 def main():
+    """Initiates variables and MySQL connection."""
     global config
     config = configparser.ConfigParser()
     dir = os.path.dirname(os.path.realpath(__file__))
@@ -51,6 +52,8 @@ def main():
     print(cid)
 
 class posts:
+    """Generates a list of posts from the selected community using pull_list or pull_missing.
+    The list can then be used to populate MySQL server using insertposts."""
     def __init__(self, plist, title):
         request = requests.get(plist)
         data = request.json()
@@ -118,6 +121,10 @@ class posts:
    
 
 class comments:
+    """Generates a list of comments from the selected community.
+    The list can then be used to populate MySQL server using insertcomms.
+    
+    The first run will pull all comments from all posts. This can be forced using the comment flat in config.ini"""
     def __init__ (self):
         if config['Flags']['comments']=="false":
                 cursor.execute("SELECT id,comments FROM posts")
@@ -215,6 +222,6 @@ if __name__ == '__main__':
 
     plist = posts.pull_list(phase1, False)
     plist.insertposts()
-
+    
     clist = comments()
     clist.insertcomms()
