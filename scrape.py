@@ -10,12 +10,12 @@ def main():
     global config
     config = configparser.ConfigParser()
     dir = os.path.dirname(os.path.realpath(__file__))
-    global configfile
-    configfile = os.path.join(dir, 'config.ini')
-    config.read(configfile)
-    global mydb
+    global CONFIGFILE
+    CONFIGFILE = os.path.join(dir, 'config.ini')
+    config.read(CONFIGFILE)
+    global MYDB
     try:
-        mydb = mysql.connector.connect(
+        MYDB = mysql.connector.connect(
         host=config['Database']['host'],
         port=config['Database']['port'],
         user=config['Database']['user'],
@@ -26,32 +26,32 @@ def main():
         print("Failed to insert into MySQL table {}".format(error))
         quit()
     global cursor
-    cursor = mydb.cursor(buffered=True)
+    cursor = MYDB.cursor(buffered=True)
 
     #values for community lookup
-    global community
-    community = config['Community']['community1']
+    global COMMUNITY
+    COMMUNITY = config['Community']['community1']
     global phase1
-    phase1 = f"https://communities.win/api/v2/post/newv2.json?community={community}"
+    phase1 = f"https://communities.win/api/v2/post/newv2.json?community={COMMUNITY}"
 
     #populate community / retrieve community ID
-    cursor.execute("SELECT id FROM communities WHERE community = %s", (community,))
-    cids = cursor.fetchone()
-    if cids is None:
+    cursor.execute("SELECT id FROM communities WHERE community = %s", (COMMUNITY,))
+    CIDS = cursor.fetchone()
+    if CIDS is None:
         try:
             insert = "INSERT INTO communities (id, community) VALUES (%s, %s)"
-            ival = ("0", community)
+            ival = ("0", COMMUNITY)
             cursor.execute(insert, ival)
-            mydb.commit()
+            MYDB.commit()
         except mysql.connector.Error as error:
             print("Failed to insert into MySQL table {}".format(error))
-        cursor.execute("SELECT id FROM communities WHERE community = %s", (community,))
-        cids = cursor.fetchone()
+        cursor.execute("SELECT id FROM communities WHERE community = %s", (COMMUNITY,))
+        CIDS = cursor.fetchone()
     global cid
-    cid = (cids[0])
+    cid = (CIDS[0])
     print(cid)
 
-class posts:
+class Posts:
     """Generates a list of posts from the selected community using pull_list or pull_missing.
     The list can then be used to populate MySQL server using insertposts."""
     def __init__(self, plist, title):
@@ -84,12 +84,12 @@ class posts:
 
     
     @classmethod
-    def pull_list(cls, plist, title):
-        return cls(plist, False)
+    def pull_list(self, plist, title):
+        return self(plist, False)
 
     @classmethod
-    def pull_missing(cls, plist, title):
-        return cls(plist, title)    
+    def pull_missing(self, plist, title):
+        return self(plist, title)    
 
     #inserts posts into DB
     def insertposts(self):
@@ -113,14 +113,14 @@ class posts:
                         insert = f"INSERT INTO posts (id, uuid, preview, is_locked, is_twitter, tweet_id, sticky_comment, link, domain, author_flair_class, is_video_mp4, is_removed, title, type, content, score_up, score_down, score, author_flair_text, is_admin, suggested_sort, is_stickied, is_nsfw, post_flair_class, is_deleted, is_image, comments, author, created, is_edited, community, is_moderator, is_video, video_link, is_new_user, vote_state, post_flair_text, crosspost_uuid, is_crosspost) VALUES ({s})"
                         ival = (x['id'], x['uuid'], x['preview'], int(x['is_locked']), int(x['is_twitter']), x['tweet_id'], x['sticky_comment'], x['link'], x['domain'], x['author_flair_class'], int(x['is_video_mp4']), int(x['is_removed']), x['title'], x['type'], x['content'], x['score_up'], x['score_down'], x['score'], x['author_flair_text'], int(x['is_admin']), x['suggested_sort'], int(x['is_stickied']), int(x['is_nsfw']), x['post_flair_class'], int(x['is_deleted']), int(x['is_image']), x['comments'], x['author'], x['created'], int(x['is_edited']), cid, int(x['is_moderator']), int(x['is_video']), x['video_link'], int(x['is_new_user']), x['vote_state'], x['post_flair_text'], xpid, int(x['is_crosspost']))
                         cursor.execute(insert, ival)
-                        mydb.commit()
+                        MYDB.commit()
                     except mysql.connector.Error as error:
                         print(x)
                         print("Failed to insert into MySQL table {}".format(error))
                         break
    
 
-class comments:
+class Comments:
     """Generates a list of comments from the selected community.
     The list can then be used to populate MySQL server using insertcomms.
     
@@ -142,10 +142,10 @@ class comments:
                         self.clist.extend(cdata["comments"])
                     i = False
                 config.set('Flags','comments','true')
-                config.write(open(configfile, "w"))    
+                config.write(open(CONFIGFILE, "w"))    
         else:    
             p = 1
-            phase2 = f"https://communities.win/api/v2/comment/community.json?community={community}&page={p}"
+            phase2 = f"https://communities.win/api/v2/comment/community.json?community={COMMUNITY}&page={p}"
             print(phase2)
             crequest = requests.get(phase2)
             cdata = crequest.json()
@@ -158,7 +158,7 @@ class comments:
                 comid = cursor.fetchone()
                 if comid is None:
                     p += 1
-                    phase2 = f"https://communities.win/api/v2/comment/community.json?community={community}&page={p}"
+                    phase2 = f"https://communities.win/api/v2/comment/community.json?community={COMMUNITY}&page={p}"
                     print(phase2)
                     crequest = requests.get(phase2)
                     cdata = crequest.json()
@@ -188,14 +188,14 @@ class comments:
                     insert = f"INSERT INTO comments (id, uuid, parent_id, is_removed, content, score_up, score_down, score, is_admin, is_stickied, is_deleted, author, created, comment_parent_id, is_edited, community, is_moderator, is_new_user, vote_state) VALUES ({s})"
                     ival = (x['id'], x['uuid'], x['parent_id'], int(x['is_removed']), x['content'], x['score_up'], x['score_down'], x['score'], int(x['is_admin']), int(x['is_stickied']), int(x['is_deleted']), x['author'], x['created'], x['comment_parent_id'], int(x['is_edited']), cid, int(x['is_moderator']), int(x['is_new_user']), x['vote_state'])
                     cursor.execute(insert, ival)
-                    mydb.commit()
+                    MYDB.commit()
                 except mysql.connector.Error as error:
                     print(x)
                     print("Failed to insert into MySQL table {}".format(error))
                     if error.errno == 1452:
                         mp = f"https://communities.win/api/v2/post/post.json?id={x['parent_id']}"
                         print(mp)
-                        missingp = posts.pull_missing(mp, x['post_title'])
+                        missingp = Posts.pull_missing(mp, x['post_title'])
                         missingp.insertposts()
                         continue
                     else:
@@ -210,7 +210,7 @@ def useridlookup(user):
             insert = "INSERT INTO users (id, user, community) VALUES (%s, %s, %s)"
             ival = ("0", user, cid)
             cursor.execute(insert, ival)
-            mydb.commit()
+            MYDB.commit()
         except mysql.connector.Error as error:
             print("Failed to insert into MySQL table {}".format(error))
         cursor.execute("SELECT id FROM users WHERE user = %s", (user,))
@@ -220,8 +220,8 @@ def useridlookup(user):
 if __name__ == '__main__':
     main()
 
-    plist = posts.pull_list(phase1, False)
+    plist = Posts.pull_list(phase1, False)
     plist.insertposts()
     
-    clist = comments()
+    clist = Comments()
     clist.insertcomms()
