@@ -84,12 +84,12 @@ class Posts:
 
     
     @classmethod
-    def pull_list(self, plist, title):
-        return self(plist, False)
+    def pull_list(cls, plist, title):
+        return cls(plist, False)
 
     @classmethod
-    def pull_missing(self, plist, title):
-        return self(plist, title)    
+    def pull_missing(cls, plist, title):
+        return cls(plist, title)    
 
     #inserts posts into DB
     def insertposts(self):
