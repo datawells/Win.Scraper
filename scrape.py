@@ -1,14 +1,14 @@
 import json
 from types import ClassMethodDescriptorType
 import requests
-import configparser
+from configparser import ConfigParser
 import mysql.connector
 import os
 
 def main():
     """Initiates variables and MySQL connection."""
     global config
-    config = configparser.ConfigParser()
+    config = ConfigParser()
     dir = os.path.dirname(os.path.realpath(__file__))
     global CONFIGFILE
     CONFIGFILE = os.path.join(dir, 'config.ini')
